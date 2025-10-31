@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diff ignoring line moves and comments/whitespace</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apply the Inter font */
+        body {
+            font-family: "Inter", sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <div class="w-full max-w-6xl bg-white rounded-lg shadow-xl p-6 md:p-8">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+            Text Line Diff Tool
+        </h1>
+        
+        <p class="text-center text-gray-600 mb-6">
+            Paste your text into the two boxes below. The tool will sort the lines from each box, ignore empty lines and XML comments (like <code>&lt;!-- ... --&gt;</code>), and then find what's been added or removed.
+        </p>
+
+        <!-- Textarea Inputs -->
+        <div class="flex flex-col md:flex-row gap-6 mb-4">
+            <!-- Original Text -->
+            <div class="flex-1">
+                <label for="text-original" class="block text-sm font-medium text-gray-700 mb-2">
+                    Original Text (Box 1)
+                </label>
+                <textarea 
+                    id="text-original"
+                    rows="15"
+                    class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                    placeholder="Paste the original text here..."></textarea>
+            </div>
+            
+            <!-- Modified Text -->
+            <div class="flex-1">
+                <label for="text-modified" class="block text-sm font-medium text-gray-700 mb-2">
+                    Modified Text (Box 2)
+                </label>
+                <textarea 
+                    id="text-modified"
+                    rows="15"
+                    class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                    placeholder="Paste the modified text here..."></textarea>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="text-center">
+            <button
+                id="diff-button"
+                class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:-translate-y-0.5"
+            >
+                Find Added & Removed Lines
+            </button>
+        </div>
+
+        <!-- Output Section -->
+        <div id="output-section" class="mt-8">
+            <div class="flex flex-col md:flex-row gap-6">
+                
+                <!-- Removed Lines -->
+                <div class="flex-1">
+                    <h2 class="text-xl font-semibold text-red-700 mb-3">
+                        Removed Lines
+                    </h2>
+                    <div id="removed-lines" class="h-64 overflow-y-auto bg-red-50 border border-red-200 rounded-lg p-4 font-mono text-sm">
+                        <p class="text-gray-500 italic">Click the button to see results.</p>
+                    </div>
+                </div>
+
+                <!-- Added Lines -->
+                <div class="flex-1">
+                    <h2 class="text-xl font-semibold text-green-700 mb-3">
+                        Added Lines
+                    </h2>
+                    <div id="added-lines" class="h-64 overflow-y-auto bg-green-50 border border-green-200 rounded-lg p-4 font-mono text-sm">
+                        <p class="text-gray-500 italic">Click the button to see results.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('diff-button').addEventListener('click', () => {
+            const originalText = document.getElementById('text-original').value;
+            const modifiedText = document.getElementById('text-modified').value;
+            
+            // 1. Helper function to process text
+            const processText = (text) => {
+                return text
+                    .split('\n')                  // Split into individual lines
+                    .map(line => line.trim())     // Remove whitespace from ends
+                    .filter(line => {
+                        const isNotEmpty = line.length > 0;
+                        // Regex: matches optional whitespace, <!--, any chars, -->, optional whitespace
+                        const isNotXmlComment = !/^\s*<!--.*-->\s*$/.test(line);
+                        return isNotEmpty && isNotXmlComment;
+                    })
+                    .sort();                      // Sort the lines alphabetically
+            };
+
+            // 2. Process both text inputs
+            const originalLines = processText(originalText);
+            const modifiedLines = processText(modifiedText);
+
+            // 3. Perform the diff using Sets for efficiency
+            const originalSet = new Set(originalLines);
+            const modifiedSet = new Set(modifiedLines);
+
+            // Added = in modified but not in original
+            const added = modifiedLines.filter(line => !originalSet.has(line));
+            
+            // Removed = in original but not in modified
+            const removed = originalLines.filter(line => !modifiedSet.has(line));
+
+            // 4. Get output elements
+            const addedLinesEl = document.getElementById('added-lines');
+            const removedLinesEl = document.getElementById('removed-lines');
+
+            // 5. Helper function to render lines
+            const renderLines = (element, lines) => {
+                element.innerHTML = ''; // Clear previous results
+                if (lines.length === 0) {
+                    element.innerHTML = '<p class="text-gray-500 italic">No lines to show.</p>';
+                    return;
+                }
+                
+                // Use createTextNode to safely render text and prevent XSS
+                lines.forEach(line => {
+                    const lineEl = document.createElement('div');
+                    lineEl.className = 'py-1 px-2';
+                    lineEl.appendChild(document.createTextNode(line));
+                    element.appendChild(lineEl);
+                });
+            };
+
+            // 6. Render the results
+            renderLines(addedLinesEl, added);
+            renderLines(removedLinesEl, removed);
+        });
+    </script>
+
+</body>
+</html>
+
