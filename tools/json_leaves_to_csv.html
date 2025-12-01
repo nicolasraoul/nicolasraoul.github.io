@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to CSV Converter</title>
+    <!-- Load Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple spinner animation */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4f46e5; /* Indigo */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <!-- Preload Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-lg bg-white p-8 rounded-xl shadow-xl">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">JSON to CSV Converter</h1>
+            <p class="text-gray-600 mb-6">Upload your JSON file to convert and download it as a CSV.</p>
+        </div>
+
+        <!-- File Upload Area -->
+        <div class="mb-4">
+            <label id="dropZone" for="jsonFile" class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <!-- Upload Icon SVG -->
+                    <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                    <p class="text-xs text-gray-500">JSON files only (.json)</p>
+                </div>
+                <input id="jsonFile" type="file" class="hidden" accept=".json,application/json" />
+            </label>
+        </div>
+
+        <!-- Status & Download Area -->
+        <div class="text-center">
+            <!-- File name display -->
+            <p id="fileName" class="text-sm text-gray-500 mb-2"></p>
+            
+            <!-- Error message display -->
+            <p id="errorMessage" class="text-sm text-red-600 font-medium mb-4"></p>
+            
+            <!-- Download Button -->
+            <button id="downloadBtn" class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center" disabled>
+                <!-- Loading Spinner (hidden by default) -->
+                <div id="loadingSpinner" class="spinner mr-3" style="display: none;"></div>
+                Download CSV
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const jsonFileInput = document.getElementById('jsonFile');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const fileNameDisplay = document.getElementById('fileName');
+            const errorMessageDisplay = document.getElementById('errorMessage');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const dropZone = document.getElementById('dropZone');
+
+            let csvContent = null;
+            let processedFileName = 'converted_data.csv';
+
+            // --- Event Listeners ---
+
+            // Listen for file selection
+            jsonFileInput.addEventListener('change', handleFileSelect);
+
+            // Listen for button click
+            downloadBtn.addEventListener('click', downloadCSV);
+
+            // --- Drag and Drop Event Listeners ---
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('bg-gray-100');
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('bg-gray-100');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('bg-gray-100');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    jsonFileInput.files = files;
+                    // Manually trigger the 'change' event
+                    handleFileSelect({ target: jsonFileInput });
+                }
+            });
+
+            // --- Core Functions ---
+
+            /**
+             * Handles the file selection event (from input or drop)
+             */
+            function handleFileSelect(event) {
+                // 1. Reset UI
+                resetUI();
+
+                const file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+
+                // 2. Validate file type
+                if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json') {
+                    showError('Please upload a valid .json file.');
+                    return;
+                }
+
+                // 3. Update UI to show file name and loading state
+                fileNameDisplay.textContent = `Selected file: ${file.name}`;
+                processedFileName = file.name.replace(/\.json$/i, '.csv');
+                loadingSpinner.style.display = 'block';
+                downloadBtn.disabled = true; // Disable while processing
+
+                // 4. Read the file
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    try {
+                        const jsonText = e.target.result;
+                        const jsonData = JSON.parse(jsonText);
+                        
+                        // 5. Convert JSON to CSV
+                        csvContent = convertJsonToCsv(jsonData);
+                        
+                        // 6. Enable download
+                        downloadBtn.disabled = false;
+                        showError(''); // Clear any previous errors
+
+                    } catch (error) {
+                        showError(`Error processing file: ${error.message}`);
+                        console.error('JSON Parse/Convert Error:', error);
+                    } finally {
+                        // 7. Hide spinner regardless of outcome
+                        loadingSpinner.style.display = 'none';
+                    }
+                };
+
+                reader.onerror = () => {
+                    showError('Error reading file.');
+                    loadingSpinner.style.display = 'none';
+                };
+
+                reader.readAsText(file);
+            }
+
+            /**
+             * The main conversion logic.
+             * Flattens all objects and converts to a CSV string.
+             */
+            function convertJsonToCsv(jsonData) {
+                if (!Array.isArray(jsonData)) {
+                    throw new Error('Input JSON must be an array of objects.');
+                }
+                if (jsonData.length === 0) {
+                    return ""; // Return empty string for empty array
+                }
+
+                // --- Helper function to find all unique LEAF keys recursively ---
+                function findLeafKeys(obj, allKeys) {
+                    if (obj === null || typeof obj !== 'object') {
+                        return; // Not an object, nothing to do
+                    }
+                  
+                    Object.keys(obj).forEach(key => {
+                        const value = obj[key];
+                        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+                            // It's a nested object, recurse
+                            findLeafKeys(value, allKeys);
+                        } else {
+                            // It's a leaf (primitive, array, or null)
+                            allKeys.add(key);
+                        }
+                    });
+                }
+
+                // --- Helper function to find the FIRST matching leaf value for a key ---
+                // Performs a depth-first search
+                function findValueForKey(obj, targetKey) {
+                    let foundValue = undefined;
+
+                    function search(currentObj) {
+                        if (currentObj === null || typeof currentObj !== 'object' || foundValue !== undefined) {
+                            return; // Stop searching if found or not an object
+                        }
+
+                        if (currentObj.hasOwnProperty(targetKey)) {
+                            const value = currentObj[targetKey];
+                            // Is this a leaf value?
+                            if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+                                foundValue = value;
+                                return; // Found it!
+                            }
+                        }
+
+                        // If not found (or if it was a branch), search children
+                        for (const key of Object.keys(currentObj)) {
+                            if (foundValue !== undefined) return; // Stop if found in a previous sibling
+                            const value = currentObj[key];
+                            if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+                                search(value); // Recurse
+                            }
+                        }
+                    }
+                    
+                    search(obj);
+                    return foundValue;
+                }
+
+                // --- Step 1: Discover all unique leaf keys from ALL rows ---
+                const allLeafKeys = new Set();
+                jsonData.forEach(item => {
+                    findLeafKeys(item, allLeafKeys);
+                });
+                
+                // Create the final ordered list of headers
+                const headers = [...Array.from(allLeafKeys)];
+
+                // --- Step 2: Build the CSV string ---
+                const csvRows = [];
+                
+                // Add header row
+                csvRows.push(headers.map(escapeCsvCell).join(','));
+
+                // Add data rows
+                for (const item of jsonData) {
+                    const row = [];
+                    
+                    // Find the value for each header, searching recursively
+                    headers.forEach(header => {
+                        const value = findValueForKey(item, header);
+                        row.push(escapeCsvCell(value)); // `escapeCsvCell` handles undefined
+                    });
+
+                    csvRows.push(row.join(','));
+                }
+
+                return csvRows.join('\n');
+            }
+
+
+            /**
+             * Handles CSV cell escaping for values containing commas, quotes, or newlines.
+             */
+            function escapeCsvCell(cellData) {
+                // Handle null or undefined by returning an empty string
+                if (cellData == null) {
+                    return '';
+                }
+
+                const str = String(cellData);
+                
+                // Check if the cell contains problematic characters
+                const needsQuotes = str.includes(',') || str.includes('\n') || str.includes('"');
+
+                if (needsQuotes) {
+                    // Escape existing double-quotes by doubling them up (e.g., " -> "")
+                    const escapedStr = str.replace(/"/g, '""');
+                    // Enclose the entire cell in double-quotes
+                    return `"${escapedStr}"`;
+                }
+
+                return str;
+            }
+
+            /**
+             * Triggers the browser download for the generated CSV content.
+             */
+            function downloadCSV() {
+                if (!csvContent) {
+                    showError('No CSV content to download.');
+                    return;
+                }
+
+                // Create a Blob (Binary Large Object)
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+                // Create a temporary link element
+                const link = document.createElement('a');
+                if (link.download !== undefined) { // Check for browser support
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', processedFileName);
+                    link.style.visibility = 'hidden';
+                    
+                    // Append, click, and remove the link
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+
+            /**
+             * Resets the UI to its initial state.
+             */
+            function resetUI() {
+                fileNameDisplay.textContent = '';
+                errorMessageDisplay.textContent = '';
+                downloadBtn.disabled = true;
+                csvContent = null;
+                loadingSpinner.style.display = 'none';
+            }
+
+            /**
+             * Utility to show an error message.
+             */
+            function showError(message) {
+                errorMessageDisplay.textContent = message;
+            }
+        });
+    </script>
+</body>
+</html>
+
+
