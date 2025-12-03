@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe-coding an Android app</title>
+    <style>
+        :root {
+            /* Color Palette */
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            
+            --blue-50: #eff6ff;
+            --blue-100: #dbeafe;
+            --blue-400: #60a5fa;
+            --blue-500: #3b82f6;
+            --blue-600: #2563eb;
+            --blue-700: #1d4ed8;
+
+            --amber-50: #fffbeb;
+            --amber-200: #fde68a;
+            --amber-400: #fbbf24;
+            --amber-600: #d97706;
+            --amber-700: #b45309;
+            --amber-800: #92400e;
+
+            --green-500: #22c55e;
+            --green-700: #15803d;
+
+            --sky-300: #7dd3fc;
+            --yellow-400: #facc15;
+
+            /* Spacing & Layout */
+            --sidebar-width: 280px;
+            --header-height: 60px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--slate-700);
+            background-color: white;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        a {
+            color: var(--blue-600);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background-color: rgba(248, 250, 252, 0.8);
+            border-right: 1px solid var(--slate-200);
+            padding: 2rem;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .brand {
+            margin-bottom: 2rem;
+        }
+        .brand h1 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--slate-900);
+            margin: 0;
+        }
+        .brand p {
+            font-size: 0.75rem;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0.25rem 0 0 0;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--slate-600);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background-color: var(--slate-100);
+            color: var(--slate-900);
+            text-decoration: none;
+        }
+
+        .nav-link.active {
+            background-color: var(--blue-50);
+            color: var(--blue-700);
+        }
+
+        .sidebar-footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--slate-200);
+        }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: var(--slate-200);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--slate-500);
+			object-fit: cover;
+        }
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .user-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--slate-900);
+        }
+        .user-link {
+            font-size: 0.75rem;
+            color: var(--blue-600);
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 3rem 4rem;
+            max-width: 1000px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background-color: var(--blue-50);
+            color: var(--blue-700);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        .ping-dot {
+            position: relative;
+            display: flex;
+            width: 8px;
+            height: 8px;
+        }
+        .ping-dot span:first-child {
+            position: absolute;
+            display: inline-flex;
+            height: 100%;
+            width: 100%;
+            border-radius: 50%;
+            background-color: var(--blue-400);
+            opacity: 0.75;
+        }
+        .ping-dot span:last-child {
+            position: relative;
+            display: inline-flex;
+            border-radius: 50%;
+            height: 8px;
+            width: 8px;
+            background-color: var(--blue-500);
+        }
+
+        h1.title {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin: 0 0 1rem 0;
+            letter-spacing: -0.025em;
+            line-height: 1.1;
+        }
+
+        p.subtitle {
+            font-size: 1.125rem;
+            color: var(--slate-600);
+            margin-bottom: 3rem;
+        }
+
+        section {
+            margin-bottom: 4rem;
+            scroll-margin-top: 2rem;
+        }
+
+        h2.section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--slate-900);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        h2.section-title span {
+            color: var(--blue-600);
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid var(--slate-100);
+            margin: 3rem 0;
+        }
+
+        /* --- Components --- */
+        .list-check {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1.5rem 0;
+        }
+        .list-check li {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: var(--slate-700);
+        }
+        .icon-check {
+            color: var(--green-500);
+            flex-shrink: 0;
+        }
+
+        .alert {
+            background-color: var(--amber-50);
+            border-left: 4px solid var(--amber-400);
+            padding: 1rem;
+            border-radius: 0 0.375rem 0.375rem 0;
+            margin-bottom: 1.5rem;
+            color: var(--amber-800);
+            font-size: 0.875rem;
+        }
+        .alert-blue {
+            background-color: var(--blue-50);
+            border-left: none;
+            border: 1px solid transparent; /* placeholder */
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--slate-700);
+            font-size: 0.875rem;
+        }
+        .alert-blue h4 {
+            color: var(--blue-700);
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+        }
+
+        /* Code Block */
+        .code-card {
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .code-card.terminal {
+            border: 1px solid var(--slate-700);
+        }
+        .code-card.prompt {
+            border: 1px solid var(--amber-200);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .code-header {
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .code-card.terminal .code-header {
+            background-color: var(--slate-800);
+            color: var(--slate-300);
+        }
+        .code-card.prompt .code-header {
+            background-color: var(--amber-50);
+            color: var(--amber-700);
+        }
+
+        .code-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: background 0.2s;
+        }
+        .code-card.terminal .copy-btn {
+            color: var(--slate-400);
+        }
+        .code-card.terminal .copy-btn:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .code-card.prompt .copy-btn {
+            color: var(--amber-700);
+        }
+        .code-card.prompt .copy-btn:hover {
+            background-color: var(--amber-200);
+        }
+
+        .code-content {
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .code-card.terminal .code-content {
+            background-color: var(--slate-900);
+            color: var(--slate-200);
+        }
+        .code-card.prompt .code-content {
+            background-color: white;
+            color: var(--slate-800);
+        }
+
+        /* Image Placeholder */
+        .image-placeholder {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: var(--slate-100);
+            border: 2px dashed var(--slate-300);
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--slate-400);
+            margin: 2rem 0 0.5rem 0;
+            transition: all 0.2s;
+        }
+        .image-placeholder:hover {
+            border-color: var(--slate-400);
+            background-color: var(--slate-50);
+        }
+        .placeholder-caption {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--slate-500);
+            font-style: italic;
+            margin-bottom: 2rem;
+        }
+
+        /* Actual Image Container */
+        .screenshot-container {
+            margin: 2rem 0 0.5rem 0;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--slate-200);
+        }
+        .screenshot-container img {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 450px; /* Reasonable max height */
+            object-fit: contain; /* Ensure image is centered and visible */
+        }
+
+        /* Game Mockup */
+        .phone-mockup {
+            max-width: 300px;
+            margin: 0 auto;
+            background-color: black;
+            border: 4px solid var(--slate-900);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+        }
+        .game-screen {
+            aspect-ratio: 9/16;
+            background-color: var(--sky-300);
+            position: relative;
+            overflow: hidden;
+        }
+        .sun {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            width: 3rem;
+            height: 3rem;
+            background-color: var(--yellow-400);
+            border-radius: 50%;
+            opacity: 0.9;
+        }
+        .grass-patch {
+            position: absolute;
+            bottom: 5rem;
+            left: 2.5rem;
+            width: 8rem;
+            height: 8rem;
+            background-color: var(--green-500);
+            border-radius: 50%;
+            opacity: 0.8;
+        }
+        .rabbit {
+            position: absolute;
+            bottom: 6rem;
+            left: 4rem;
+            font-size: 2.5rem;
+        }
+        .game-ui {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 5rem;
+            background-color: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+        }
+        .game-btn {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .score {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            color: white;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.25rem;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.3);
+        }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 5rem;
+            padding-top: 2.5rem;
+            border-top: 1px solid var(--slate-200);
+            text-align: center;
+            color: var(--slate-500);
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .footer-sep {
+            color: var(--slate-300);
+        }
+
+        /* Icons */
+        svg {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Mobile Responsive */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--slate-200);
+            z-index: 50;
+            padding: 0 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: 10px 0 15px -3px rgba(0, 0, 0, 0.1);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+                padding-top: calc(var(--header-height) + 1.5rem);
+            }
+            .mobile-header {
+                display: flex;
+            }
+            h1.title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <span style="font-weight: 700; color: var(--slate-900);">Vibe-coding Android</span>
+        <button id="menu-btn" style="background: none; border: none; cursor: pointer; color: var(--slate-600);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="12" x2="20" y2="12"></line>
+                <line x1="4" y1="6" x2="20" y2="6"></line>
+                <line x1="4" y1="18" x2="20" y2="18"></line>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <h1>Android vibe</h1>
+            <p>Create your apps</p>
+        </div>
+        <nav class="nav-links">
+            <a onclick="scrollToSection('prepare')" class="nav-link active" data-target="prepare">1) Prepare</a>
+            <a onclick="scrollToSection('launch')" class="nav-link" data-target="launch">2) Launch & Screenshot</a>
+            <a onclick="scrollToSection('create')" class="nav-link" data-target="create">3) Create from Scratch</a>
+            <a onclick="scrollToSection('game')" class="nav-link" data-target="game">4) The Rabbit Game</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <img src="https://www.gravatar.com/avatar/c3af87f6b1d4d247d01ce3b73d918fc7?s=128" alt="Nicolas Raoul" class="avatar">
+                <div class="user-info">
+                    <span class="user-name">Nicolas Raoul</span>
+                    <a href="https://nicolasraoul.github.io" target="_blank" rel="noopener noreferrer" class="user-link">
+                        nicolasraoul.github.io 
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header style="margin-bottom: 3rem;">
+            <div class="hero-badge">
+                <div class="ping-dot">
+                    <span></span>
+                    <span></span>
+                </div>
+                Tutorial
+            </div>
+            <h1 class="title">Vibe-coding an Android app</h1>
+            <p class="subtitle">Have Antigravity create a playable game with just the prompt "make a fun game".</p>
+        </header>
+
+        <!-- Section 1 -->
+        <section id="prepare">
+            <h2 class="section-title"><span>1)</span> Prepare</h2>
+            <p style="margin-bottom: 1rem; color: var(--slate-600);">Before we begin, you will need to set up your environment.</p>
+
+            <ul class="list-check">
+                <li>
+                    <div class="icon-check">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    </div>
+                    <span><strong>Install <a href="https://antigravity.google/" target="_blank">Antigravity<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>:</strong> You will need a valid Gmail address to authenticate.</span>
+                </li>
+                <li>
+                    <div class="icon-check">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    </div>
+                    <span><strong>Install ADB:</strong> Any distribution works, but installing <a href="https://developer.android.com/studio" target="_blank">Android Studio<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a> is often the easiest way to get the latest tools.</span>
+                </li>
+                <li>
+                    <div class="icon-check">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    </div>
+                    <span><strong>Connect Device:</strong> Plug your Android phone into your computer via a USB cable.</span>
+                </li>
+            </ul>
+
+            <div class="alert">
+                <strong>Pro Tip:</strong> To prevent your screen from locking during the tutorial, run the following command.
+            </div>
+
+            <!-- Terminal Block -->
+            <div class="code-card terminal">
+                <div class="code-header">
+                    <div class="code-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                        Terminal
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="code-content">adb shell settings put global stay_on_while_plugged_in 3</div>
+            </div>
+        </section>
+
+        <hr>
+
+        <!-- Section 2 -->
+        <section id="launch">
+            <h2 class="section-title"><span>2)</span> Launch and screenshot an existing app</h2>
+            <p style="margin-bottom: 1rem; color: var(--slate-600);">
+                For our initial test, we will use a simple existing application. Go to the trusted store F-Droid and select any app such as <a href="https://f-droid.org/en/packages/com.bbzone.isitprime/" target="_blank">this prime number checker <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>, then click "Download APK".
+            </p>
+            <p style="margin-bottom: 0.5rem; color: var(--slate-600);">Use the prompt below to instruct Antigravity to install the app and verify it works by taking a screenshot.</p>
+
+            <!-- Prompt Block -->
+            <div class="code-card prompt">
+                <div class="code-header">
+                    <div class="code-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                        Prompt to Antigravity
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="code-content">There is an Android phone connected via USB.
+
+You can install and run an APK by running:
+adb install com.bbzone.isitprime_3.apk ; adb shell monkey -p com.bbzone.isitprime -c android.intent.category.LAUNCHER 1
+
+You can take a screenshot by running:
+adb shell screencap -p /sdcard/screenshot.png ; adb pull /sdcard/screenshot.png
+
+Install and run the com.bbzone.isitprime_3.apk APK in your folder and take a screenshot.</div>
+            </div>
+
+            <p style="color: var(--green-700); font-weight: 500; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                That works flawlessly:
+            </p>
+
+            <div class="screenshot-container">
+                <img src="assets/prime_app_screenshot.png" alt="IsItPrime App Screenshot">
+            </div>
+            <p class="placeholder-caption">The app launches successfully and the screenshot is retrieved to the local folder.</p>
+        </section>
+
+        <hr>
+
+        <!-- Section 3 -->
+        <section id="create">
+            <h2 class="section-title"><span>3)</span> Create a Basic App</h2>
+            <p style="margin-bottom: 1rem; color: var(--slate-600);">Now let's push the capabilities further. We will ask the AI to code a minimal Android app from scratch, build it, and run it.</p>
+
+            <div class="code-card prompt">
+                <div class="code-header">
+                    <div class="code-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                        Prompt
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="code-content">create a basic/minimalistic Android app that says "Hello", build it with Gradle on command line, run it on the device and take a screenshot.</div>
+            </div>
+
+            <div class="alert-blue">
+                <h4>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                    Model Comparison
+                </h4>
+                <p style="margin: 0;">While <strong>Gemini 2.5 Pro</strong> struggled with creating Android apps from scratch (often missing Gradle dependencies or structure), <strong>Gemini 3 Pro</strong> handles this request with no issues. Antigravity correctly executes the build commands and captures the result.</p>
+            </div>
+
+            <div class="screenshot-container">
+                <img src="assets/hello_app_screenshot.png" alt="Hello World App Screenshot">
+            </div>
+            <p class="placeholder-caption">A minimal Android activity displaying 'Hello' on the screen.</p>
+        </section>
+
+        <hr>
+
+        <!-- Section 4 -->
+        <section id="game">
+            <h2 class="section-title"><span>4)</span> Make a Fun Game</h2>
+            <p style="margin-bottom: 1rem; color: var(--slate-600);">Finally, let's try something creative. We'll ask for a game and use video recording to verify the gameplay loop.</p>
+
+            <div class="code-card prompt">
+                <div class="code-header">
+                    <div class="code-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                        Prompt
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="code-content">make a fun game involving a rabbit.
+to verify that your game works as expected, use adb shell screenrecord /sdcard/video.mp4 and analyze the video carefully.</div>
+            </div>
+
+            <div style="margin-bottom: 2rem; color: var(--slate-600);">
+                <p>I unfortunately ran out of Gemini quota for today, while it was still iterating.</p>
+                <p>So I switched to <strong>Claude Sonnet 4.5</strong>, but it seems to struggle with understanding images (which is crucial to "understand" what is actually happening on the screen). It generated a playable game, but the proportions are off—it likely interprets the grass patch as a background layer rather than a floor element.</p>
+            </div>
+
+            <!-- Game Screenshot -->
+            <div class="screenshot-container">
+                <img src="assets/rabbit_game.png" alt="Rabbit Game Screenshot">
+            </div>
+            <p class="placeholder-caption" style="margin-top: 1rem;">The resulting game: Playable, but visually confused. Can't wait for tomorrow's quota for Gemini to continue iterating on it!</p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="page-footer">
+            <p>&copy; <span id="year"></span> Nicolas Raoul, CC BY-SA 4.0.</p>
+            <div class="footer-links">
+                <a href="https://nicolasraoul.github.io" target="_blank">Website</a>
+                <span class="footer-sep">•</span>
+                <a href="https://github.com/nicolas-raoul" target="_blank">GitHub</a>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        // Set Current Year
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Copy to Clipboard Functionality
+        function copyToClipboard(button) {
+            const card = button.closest('.code-card');
+            const code = card.querySelector('.code-content').textContent;
+
+            // Fallback for iframes or non-secure contexts
+            const textArea = document.createElement("textarea");
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                // Visual Feedback
+                const originalHtml = button.innerHTML;
+                button.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    Copied
+                `;
+                button.style.color = '#22c55e'; // Green
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHtml;
+                    button.style.color = '';
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // Scroll Navigation Logic
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if(element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                // Close sidebar on mobile if open
+                const sidebar = document.getElementById('sidebar');
+                if(window.innerWidth <= 1024) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        }
+
+        // Highlight Active Link on Scroll
+        window.addEventListener('scroll', () => {
+            let current = '';
+            const scrollPosition = window.scrollY + 150; // Offset
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-target') === current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Mobile Menu Toggle
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 1024 && 
+                sidebar.classList.contains('open') && 
+                !sidebar.contains(e.target) && 
+                !menuBtn.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>
