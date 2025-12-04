@@ -661,17 +661,8 @@
                 </div>
                 <div class="code-content">adb shell settings put global stay_on_while_plugged_in 3</div>
             </div>
-        </section>
-
-        <hr>
-
-        <!-- Section 2 -->
-        <section id="launch">
-            <h2 class="section-title"><span>2)</span> Optional: Launch and screenshot an existing app</h2>
-            <p style="margin-bottom: 1rem; color: var(--slate-600);">
-                For our initial test, we will use a simple existing application. Go to the trusted store F-Droid and select any app such as <a href="https://f-droid.org/en/packages/com.bbzone.isitprime/" target="_blank">this prime number checker <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>, then click "Download APK".
-            </p>
-            <p style="margin-bottom: 0.5rem; color: var(--slate-600);">Use the prompt below to instruct Antigravity to install the app and verify it works by taking a screenshot.</p>
+			
+            <p style="margin-bottom: 0.5rem; color: var(--slate-600);">Use the prompt below to tell Antigravity how to do use your phone for Android development.</p>
 
             <!-- Prompt Block -->
             <div class="code-card prompt">
@@ -688,12 +679,40 @@
                 <div class="code-content">There is an Android phone connected via USB.
 
 You can install and run an APK by running:
-adb install com.bbzone.isitprime_3.apk ; adb shell monkey -p com.bbzone.isitprime -c android.intent.category.LAUNCHER 1
+adb install your-apk.apk ; adb shell monkey -p your.app.namespace -c android.intent.category.LAUNCHER 1
 
 You can take a screenshot by running:
 adb shell screencap -p /sdcard/screenshot.png ; adb pull /sdcard/screenshot.png
 
-Install and run the com.bbzone.isitprime_3.apk APK in your folder and take a screenshot.</div>
+You can record a screencast by running:
+adb shell screenrecord /sdcard/video.mp4 ; adb pull /sdcard/video.mp4</div>
+            </div>
+
+        </section>
+
+        <hr>
+
+        <!-- Section 2 -->
+        <section id="launch">
+            <h2 class="section-title"><span>2)</span> Optional: Launch and screenshot an existing app</h2>
+            <p style="margin-bottom: 1rem; color: var(--slate-600);">
+                For our initial test, we will use a simple existing application. Go to the trusted store F-Droid and select any app such as <a href="https://f-droid.org/en/packages/com.bbzone.isitprime/" target="_blank">this prime number checker <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>, then click "Download APK" and save the APK your Antigravity project's folder.
+            </p>
+            <p style="margin-bottom: 0.5rem; color: var(--slate-600);">Use the prompt below to instruct Antigravity to install the app and verify it works by taking a screenshot.</p>
+
+            <!-- Prompt Block -->
+            <div class="code-card prompt">
+                <div class="code-header">
+                    <div class="code-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                        Prompt to Antigravity
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard(this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="code-content">Install and run the com.bbzone.isitprime_3.apk APK found in your folder, then take a screenshot of it.</div>
             </div>
 
             <p style="color: var(--green-700); font-weight: 500; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -761,6 +780,7 @@ Install and run the com.bbzone.isitprime_3.apk APK in your folder and take a scr
                     </button>
                 </div>
                 <div class="code-content">make a fun game involving a rabbit.
+					
 to verify that your game works as expected, use adb shell screenrecord /sdcard/video.mp4 and analyze the video carefully.</div>
             </div>
 
